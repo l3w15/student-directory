@@ -18,7 +18,7 @@ require 'date'
 def interactive_menu
   loop do
     print_menu
-    process(gets.chomp)
+    process(STDIN.gets.chomp)
   end
 end 
 def process(selection)
@@ -59,23 +59,17 @@ def input_students
   puts "Please enter the names of the students"
   puts "To finish the list, just hit enter twice"
   # get the first name
-  name = gets.chomp
+  name = STDIN.gets.chomp
   #while the name is not empty, repeat this code
   while !name.empty? do
     puts "Please enter the student's cohort month or just hit enter"
-    month = gets.chomp.downcase9
-    month = "january" if month.empty?
-    begin
-       Date.parse(month)
-    rescue ArgumentError
-       puts "Please enter a valid month or just hit enter"
-       month = gets.chomp.downcase
-    end
-    month = month.downcase.to_sym
-    @students << {name: name, cohort: month}
+    @month = STDIN.gets.chomp.downcase
+    check_month
+    @month = @month.downcase.to_sym
+    @students << {name: name, cohort: @month}
     puts @students.count < 2 ? "That's one student" : "Now we have #{@students.count} students"
     # get another name from the user
-    name = gets.chomp
+    name = STDIN.gets.chomp
   end  
 end  
 def print_header
@@ -111,15 +105,37 @@ def save_students
   end
   file.close
 end  
-def load_students
-  file = File.open("students.csv", "r")
+def check_month
+  begin
+    Date.parse(@month)
+  rescue ArgumentError
+     puts "Please enter a valid month or just hit enter"
+     @month = STDIN.gets.chomp.downcase
+     @month = "january" if @month.empty?
+     check_month
+  end
+end  
+def load_students(filename = "students.csv")
+  file = File.open(filename, "r")
   file.readlines.each do |line|
     name, cohort = line.chomp.split(',')
     @students << {name: name, cohort: cohort.to_sym}
   end
   file.close
 end  
+def try_load_students
+  filename = ARGV.first
+  return if filename.nil?
+  if File.exists?(filename)
+    load_students(filename)
+    puts "Loaded #{@students.count} from #{filename}"
+  else
+    puts "Sorry, #{filename} doesn't exist."
+    exit
+  end
+end  
 # nothing happens until we call the methods
+try_load_students
 interactive_menu
 
 
