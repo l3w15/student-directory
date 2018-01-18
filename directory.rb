@@ -24,16 +24,16 @@ def input_students
   #while the name is not empty, repeat this code
   while !name.empty? do
     puts "Please enter the student's cohort month or just hit enter"
-    date = gets.chomp.downcase
-    date = "january" if date.empty?
+    month = gets.chomp.downcase
+    month = "january" if month.empty?
     begin
-       Date.parse(date)
+       Date.parse(month)
     rescue ArgumentError
        puts "Please enter a valid month or just hit enter"
-       date = gets.chomp.downcase
+       month = gets.chomp.downcase
     end
-    date = date.downcase.to_sym
-    students << {name: name, cohort: date}
+    month = month.downcase.to_sym
+    students << {name: name, cohort: month}
     puts students.count < 2 ? "That's one student" : "Now we have #{students.count} students"
     # get another name from the user
     name = gets.chomp
@@ -46,8 +46,18 @@ def print_header
   puts "--------------------------------".center(50)
 end
 def print(students)
-  students.each_with_index do |student, index|
-    puts "#{index + 1}. #{student[:name]} (#{student[:cohort]} cohort)".center(50)
+  cohorts = []
+  students.each do |student|
+    cohorts.push(student[:cohort].to_s) if !cohorts.include?(student[:cohort].to_s)
+    #puts "#{index + 1}. #{student[:name]} (#{student[:cohort]} cohort)".center(50)
+  end 
+  cohorts.sort_by! {|month| Date.parse(month)}
+  cohorts.each do |cohort|
+    puts "#{cohort.capitalize} cohort".center(50)
+    students.each do |student|
+      puts student[:name].center(50) if student[:cohort] == cohort.to_sym
+      #puts "#{index + 1}. #{student[:name]} (#{student[:cohort]} cohort)".center(50)
+    end 
   end  
 end
 def print_footer(names)
@@ -55,6 +65,12 @@ def print_footer(names)
 end  
 # nothing happens until we call the methods
 students = input_students
-print_header
-print(students)
-print_footer(students)
+if !students.empty?
+  print_header
+  print(students)
+  print_footer(students)
+  puts
+else
+  puts "You didn't really think we were going to print an empty list did you?"
+  puts
+end  
