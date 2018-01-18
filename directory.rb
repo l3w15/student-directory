@@ -12,6 +12,7 @@
 #   {name: "Joffrey Baratheon", cohort: :november},
 #   {name: "Norman Bates", cohort: :november}
 # ]
+require 'date'
 # and define some methods
 def input_students
   puts "Please enter the names of the students"
@@ -22,7 +23,17 @@ def input_students
   name = gets.chomp
   #while the name is not empty, repeat this code
   while !name.empty? do
-    students << {name: name, cohort: :november}
+    puts "Please enter the student's cohort month or just hit enter"
+    date = gets.chomp.downcase
+    date = "january" if date.empty?
+    begin
+       Date.parse(date)
+    rescue ArgumentError
+       puts "Please enter a valid month or just hit enter"
+       date = gets.chomp.downcase
+    end
+    date = date.downcase.to_sym
+    students << {name: name, cohort: date}
     puts students.count < 2 ? "That's one student" : "Now we have #{students.count} students"
     # get another name from the user
     name = gets.chomp
@@ -31,16 +42,16 @@ def input_students
   students
 end  
 def print_header
-  puts "The students of the Academy of Evil"
-  puts "--------------------------------"
+  puts "The students of the Academy of Evil".center(50)
+  puts "--------------------------------".center(50)
 end
 def print(students)
-  students.each do |student|
-    puts "#{student[:name]} (#{student[:cohort]} cohort)"
+  students.each_with_index do |student, index|
+    puts "#{index + 1}. #{student[:name]} (#{student[:cohort]} cohort)".center(50)
   end  
 end
 def print_footer(names)
-  puts "Overall, we have #{names.count} great students"
+  puts "Overall, we have #{names.count} great students".center(50)
 end  
 # nothing happens until we call the methods
 students = input_students
