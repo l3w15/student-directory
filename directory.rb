@@ -14,6 +14,33 @@
 # ]
 require 'date'
 # and define some methods
+def interactive_menu
+  students = []
+  loop do
+    puts "1. Add new student(s)"
+    puts "2. Show the students"
+    puts "9. Exit"
+    selection = gets.chomp
+    case selection
+    when "1"
+      students = input_students
+    when "2"
+      if !students.empty?
+        print_header
+        print(students)
+        print_footer(students)
+        puts
+      else
+        puts "You didn't really think we were going to print an empty list did you?"
+        puts
+      end 
+    when "9"
+      exit
+    else
+      puts "Sorry didn't get that, please try again"
+    end
+  end
+end  
 def input_students
   puts "Please enter the names of the students"
   puts "To finish the list, just hit enter twice"
@@ -64,13 +91,7 @@ def print_footer(names)
   puts "Overall, we have #{names.count} great students".center(50)
 end  
 # nothing happens until we call the methods
-students = input_students
-if !students.empty?
-  print_header
-  print(students)
-  print_footer(students)
-  puts
-else
-  puts "You didn't really think we were going to print an empty list did you?"
-  puts
-end  
+interactive_menu
+
+
+ 
