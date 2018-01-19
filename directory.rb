@@ -12,7 +12,8 @@
 #   {name: "Joffrey Baratheon", cohort: :november},
 #   {name: "Norman Bates", cohort: :november}
 # ]
-require 'date'
+require 'date' 
+require'csv'
 @students = []
 # and define some methods
 def interactive_menu
@@ -21,29 +22,26 @@ def interactive_menu
     process(STDIN.gets.chomp)
   end
 end 
+
 def process(selection)
   case selection
-  when "1"
-    input_students
-  when "2"
-    show_students
-  when "3"
-    save_students
-  when "4"
-    load_students
-  when "9"
-    exit
-  else
-    puts "Sorry didn't get that, please try again"
+  when "1"; input_students
+  when "2"; show_students
+  when "3"; save_students
+  when "4"; get_load_file
+  when "9"; exit
+  else puts "Sorry didn't get that, please try again"
   end
 end
+
 def print_menu
   puts "1. Add new student(s)"
   puts "2. Show the students"
-  puts "3. Save the list to students.csv"
-  puts "4. Load the list from students.csv"
+  puts "3. Save the list"
+  puts "4. Load a list from another file"
   puts "9. Exit"
 end  
+
 def show_students
   if !@students.empty?
     print_header
@@ -54,28 +52,46 @@ def show_students
     puts "You didn't really think we were going to print an empty list did you?"
     puts
   end 
-end  
+end
+
 def input_students
   puts "Please enter the names of the students"
   puts "To finish the list, just hit enter twice"
   # get the first name
-  name = STDIN.gets.chomp
+  @name = STDIN.gets.chomp
   #while the name is not empty, repeat this code
-  while !name.empty? do
-    puts "Please enter the student's cohort month or just hit enter"
-    @month = STDIN.gets.chomp.downcase
-    check_month
-    @month = @month.downcase.to_sym
-    @students << {name: name, cohort: @month}
+  get_month
+  while !@name.empty? do
     puts @students.count < 2 ? "That's one student" : "Now we have #{@students.count} students"
     # get another name from the user
-    name = STDIN.gets.chomp
-  end  
+    @name = STDIN.gets.chomp
+  end 
+end
+
+def get_month
+  puts "Please enter the student's cohort month or just hit enter"
+  @month = STDIN.gets.chomp.downcase
+  check_month
+  @month = @month.downcase.to_sym
+  @students << {name: @name, cohort: @month}
+end
+
+def check_month
+  @month = "january" if @month.empty?
+  begin
+    Date.parse(@month)
+  rescue ArgumentError
+     puts "Please enter a valid month or just hit enter"
+     @month = STDIN.gets.chomp.downcase
+     check_month
+  end
 end  
+
 def print_header
   puts "The students of the Academy of Evil".center(50)
-  puts "--------------------------------".center(50)
+  puts "--------------------------".center(50)
 end
+
 def print_students_list
   cohorts = []
   @students.each do |student|
@@ -84,51 +100,55 @@ def print_students_list
   end 
   cohorts.sort_by! {|month| Date.parse(month)}
   cohorts.each do |cohort|
-    puts "#{cohort.capitalize} cohort".center(50)
+    puts "#{cohort} cohort".center(50).upcase
     @students.each do |student|
       puts student[:name].center(50) if student[:cohort] == cohort.to_sym
       #puts "#{index + 1}. #{student[:name]} (#{student[:cohort]} cohort)".center(50)
     end 
-  end  
+  end
+  puts "--------------------------".center(50)
 end
+
 def print_footer
   puts "Overall, we have #{@students.count} great students".center(50)
 end  
+
 def save_students
-  # open the file for writing
-  file = File.open("students.csv", "w")
-  # iterate over the array of students
-  @students.each do |student|
-    student_data = [student[:name], student[:cohort]]
-    csv_line = student_data.join(",")
-    file.puts csv_line
+  puts "Enter a (.csv) filename to save to" 
+  filename = STDIN.gets.chomp
+  filename = filename + ".csv" if filename[-4..-1] != ".csv"
+  CSV.open(filename, "wb") do |file|
+    @students.each do |student|
+      file << [student[:name], student[:cohort]]
+    end
   end
-  file.close
+  puts "Saved #{@students.count} students to #{filename}"
 end  
-def check_month
-  begin
-    Date.parse(@month)
-  rescue ArgumentError
-     puts "Please enter a valid month or just hit enter"
-     @month = STDIN.gets.chomp.downcase
-     @month = "january" if @month.empty?
-     check_month
-  end
-end  
-def load_students(filename = "students.csv")
-  file = File.open(filename, "r")
-  file.readlines.each do |line|
-    name, cohort = line.chomp.split(',')
-    @students << {name: name, cohort: cohort.to_sym}
-  end
-  file.close
-end  
-def try_load_students
-  filename = ARGV.first
-  return if filename.nil?
+
+def get_load_file
+  puts "Enter a file name to load from" 
+  filename = STDIN.gets.chomp
   if File.exists?(filename)
     load_students(filename)
-    puts "Loaded #{@students.count} from #{filename}"
+  else 
+    puts "Sorry, #{filename} not found"
+  end  
+end  
+
+def load_students(filename)
+  @students = []
+  CSV.foreach(filename) do |row|
+    name, cohort = row[0], row[1]
+    @students << {name: name, cohort: cohort.to_sym}
+  end
+  puts "Loaded #{@students.count} students from #{filename}"
+end  
+
+def try_load_students
+  filename = ARGV.first
+  filename = "students.csv" if filename.nil? 
+  if File.exists?(filename)
+    load_students(filename)
   else
     puts "Sorry, #{filename} doesn't exist."
     exit
